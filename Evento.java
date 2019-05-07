@@ -75,7 +75,7 @@ public class Evento {
             }
             count++;
         } //end else (if empty)
-        imprime();
+        // imprime();
     } //end add
 
     public void imprime() {

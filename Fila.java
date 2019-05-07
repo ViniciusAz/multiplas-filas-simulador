@@ -7,10 +7,11 @@ public class Fila{
     private int lotacao;
     private int capacidade;
     private int numServers;
-    private int desistencia;
-    // private float[] log;
+    private int desistencia; // contabilizador de desistencias
+    private float[] log; // contebilizador de resultados da simulacao
+    private float tempoLocal; // tempo local de mudanca de estados da fila (controle resultados)
 
-    public Fila(int id, float chMin, float chMax, float atMin, float atMax, int servers, int cap) {
+    public Fila(int id, float tempoInicial, float chMin, float chMax, float atMin, float atMax, int servers, int cap) {
         this.id = id;
         this.atMin = atMin;
         this.atMax = atMin;
@@ -20,9 +21,11 @@ public class Fila{
         numServers = servers;
         lotacao = 0;
         desistencia = 0;
-        // log[] = new float[capacidade+1];
+        log = new float[capacidade+1];
+        tempoLocal = tempoInicial;
+
     }
-    public Fila(int id, float atMin, float atMax, int servers, int cap) {
+    public Fila(int id, float tempoInicial, float atMin, float atMax, int servers, int cap) {
         this.id = id;
         this.atMin = atMin;
         this.atMax = atMin;
@@ -30,17 +33,29 @@ public class Fila{
         numServers = servers;
         lotacao = 0;
         desistencia = 0;
-        // log[] = new float[capacidade+1];
+        log = new float[capacidade+1];
+        tempoLocal = tempoInicial;
     }
 
-    public void entra(float tA, float tB) {
-      //log
+    public void entra(float tempoGlobal) {
+      log[lotacao] += (tempoGlobal - tempoLocal);
+      tempoLocal = tempoGlobal;
+      // System.out.println("Total = " + log[lotacao]);
       lotacao++;
     }
 
-    public void sai(float tA, float tB) {
+    public void sai(float tempoGlobal) {
+      log[lotacao] += (tempoGlobal - tempoLocal);
+      tempoLocal = tempoGlobal;
+      // System.out.println("Total = " + log[lotacao]);
       lotacao--;
-      //log
+    }
+
+    public void imprimeStatistics(float tI, float tF) {
+      // System.out.println("Tempo total = " + (tF - tI));
+      for (int i = 0; i < capacidade+1; i++) {
+        System.out.println("Fila [" + id + "] esteve " + String.format("%.2f", (100.0f*log[i]/(tF-tI))) + "% do tempo com lotação " +i+"/"+capacidade);
+      }
     }
 
     public boolean isEmpty() {

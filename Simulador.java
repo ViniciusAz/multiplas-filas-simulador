@@ -4,6 +4,7 @@ public class Simulador {
 
   private float tempoInit;
   private float tempo;
+  private float numRandom = 0.0001f;
 
   private Evento agenda = new Evento();
   private Fila[] filas;
@@ -21,12 +22,12 @@ public class Simulador {
   }
 
   public void novaFila(float chMin, float chMax, float atMin, float atMax, int servers, int cap) {
-    filas[fid] = new Fila(fid, chMin, chMax, atMin, atMax, servers, cap);
+    filas[fid] = new Fila(fid, tempo, chMin, chMax, atMin, atMax, servers, cap);
     fid++;
   }
 
   public void novaFila(float atMin, float atMax, int servers, int cap) {
-    filas[fid] = new Fila(fid, atMin, atMax, servers, cap);
+    filas[fid] = new Fila(fid, tempo, atMin, atMax, servers, cap);
     fid++;
   }
 
@@ -35,7 +36,7 @@ public class Simulador {
   }
 
   public void start() {
-    System.out.println("Iniciando simulação no tempo " + tempoInit);
+    System.out.println("Iniciando simulação no tempo : " + tempoInit);
     for (int i = 0; i < numFilas; i++) {
       if (relacao[numFilas][i] == 1) {
         agendaChegada(tempo, filas[i]);
@@ -47,7 +48,7 @@ public class Simulador {
   public void next() {
     char etipo = agenda.tipo();
     int idfila = agenda.idfila();
-    System.out.println(tempo + " Fila [" + idfila + "]: " + filas[idfila].lotacao() + "/" + filas[idfila].capacidade());
+    // System.out.println(tempo + " Fila [" + idfila + "]: " + filas[idfila].lotacao() + "/" + filas[idfila].capacidade());
     int filadest = 0;
     if (etipo == 't') {
       filadest = agenda.destino();
@@ -60,19 +61,18 @@ public class Simulador {
   }
 
   public void chegada(float t, int f) {
-    System.out.println("Chegada : " + t);
+    // System.out.println("Chegada : " + t);
     // contabiliza tempo
-    float tempoAntigo = tempo;
     tempo = t;
     if(!filas[f].isFull()) { // se FILA nao esta cheia
-      filas[f].entra(tempoAntigo, tempo); //  FILA++
+      filas[f].entra(tempo); //  FILA++
       if(filas[f].lotacao() <= filas[f].servers()) { //  se FILA <= numServers
         //calcula probabilidade para sair ou transferir se for possivel
         // if (relacao[f][numFilas] == 1) {
           float prob = 0;
-          float aleatorio = random();
+          float aleatorio = aleatorio(3,2,7);
           for (int i = 0; i <= numFilas; i++) {
-System.out.println("R ["+f+"]["+i+"] = " +relacao[f][i] + " aleatorio " + aleatorio);
+// System.out.println("R ["+f+"]["+i+"] = " +relacao[f][i] + " aleatorio " + aleatorio);
             if (relacao[f][i] > 0) {
               if (aleatorio <= relacao[f][i]+prob) {
                 if (i == numFilas) agendaSaida(tempo, filas[f]);
@@ -92,18 +92,17 @@ System.out.println("R ["+f+"]["+i+"] = " +relacao[f][i] + " aleatorio " + aleato
   }
 
   public void tranferencia(float t, int f, int d) {
-    System.out.println("Tranferencia : " + t);
+    // System.out.println("Tranferencia : " + t);
     // contabiliza tempo
-    float tempoAntigo = tempo;
     tempo = t;
 
-    filas[f].sai(tempoAntigo, tempo);
+    filas[f].sai(tempo);
     if (filas[f].lotacao() >= filas[f].servers()) {
       if (relacao[f][numFilas] == 1) {
         float prob = 0;
-        float aleatorio = random();
+        float aleatorio = aleatorio(3,2,7);
         for (int i = 0; i <= numFilas; i++) {
-System.out.println("R ["+f+"]["+i+"] = " +relacao[f][i] + " aleatorio " + aleatorio);
+// System.out.println("R ["+f+"]["+i+"] = " +relacao[f][i] + " aleatorio " + aleatorio);
           if (relacao[f][i] > 0) {
             if (aleatorio <= relacao[f][i]+prob) {
               if (i == numFilas) agendaSaida(tempo, filas[f]);
@@ -117,13 +116,13 @@ System.out.println("R ["+f+"]["+i+"] = " +relacao[f][i] + " aleatorio " + aleato
       } //if relacao[f][numFilas] == 1
     }
     if(!filas[d].isFull()) { // se FILA nao esta cheia
-      filas[d].entra(tempoAntigo, tempo);
+      filas[d].entra(tempo);
       if (filas[d].lotacao() <= filas[d].servers() ) {
         if (relacao[d][numFilas] == 1) {
           float prob = 0;
-          float aleatorio = random();
+          float aleatorio = aleatorio(3,2,7);
           for (int i = 0; i <= numFilas; i++) {
-  System.out.println("R ["+d+"]["+i+"] = " +relacao[d][i] + " aleatorio " + aleatorio);
+  // System.out.println("R ["+d+"]["+i+"] = " +relacao[d][i] + " aleatorio " + aleatorio);
             if (relacao[d][i] > 0) {
               if (aleatorio <= relacao[d][i]+prob) {
                 if (i == numFilas) agendaSaida(tempo, filas[d]);
@@ -142,53 +141,53 @@ System.out.println("R ["+f+"]["+i+"] = " +relacao[f][i] + " aleatorio " + aleato
   }
 
   public void saida(float t, int f) {
-    System.out.println("Saida : " + t);
-    float tempoAntigo = tempo;
+    // System.out.println("Saida : " + t);
     tempo = t; //  contabiliza tempo
-    filas[f].sai(tempoAntigo, tempo); //  FILA ––
-System.out.println("SAIU CORRENDO = " + f);
+    filas[f].sai(tempo); //  FILA ––
     if (filas[f].lotacao() >= filas[f].servers()) { //  se FILA >= numServers
       agendaSaida(tempo, filas[f]);
     }
   }
 
   public float calcula(float max, float min) {
-    // Random r = new Random();
-    // return ((max - min) * (r.nextInt(10000)/10000.0f) + min);
-    return ((max - min) * (aleatorio(3,2,7,0.0001f)) + min);
-  }
-
-  private float random() {
-    Random r = new Random();
-    return r.nextInt(10000)/10000.0f;
+    return ((max - min) * (aleatorio(3,2,7)) + min);
   }
 
   public void agendaChegada(float t, Fila f) {
     t += calcula(f.chMin(), f.chMax());
-    System.out.println("Agenda Chegada : " + t);
+    // System.out.println("Agenda Chegada : " + t);
     agenda.add(t, 'c', f.id(), -1);
   }
 
   public void agendaTransferencia(float t, Fila f, int destino) {
     t += calcula(f.atMin(), f.atMax());
-    System.out.println("Agenda Transferencia : " + t);
+    // System.out.println("Agenda Transferencia : " + t);
     agenda.add(t, 't', f.id(), destino);
   }
 
   public void agendaSaida(float t, Fila f) {
     t += calcula(f.atMin(), f.atMax());
-    System.out.println("Agenda Saida : " + t);
+    // System.out.println("Agenda Saida : " + t);
     agenda.add(t, 's', f.id(), -1);
   }
 
-  public void numDesistencias() {
+  public void stop() {
+    System.out.println("Tempo total de execução : " + (tempo - tempoInit));
     for (int i = 0; i < numFilas; i++) {
-      System.out.println("Fila " + i + " : " + filas[i].numDesistencias());
+      //computar o tempo final
+      if (filas[i].isEmpty()) filas[i].entra(tempo);
+      else filas[i].sai(tempo);
+      filas[i].imprimeStatistics(tempoInit, tempo);
+      System.out.println("Fila [" + i + "] : " + filas[i].numDesistencias() + " desistências.");
     }
+    System.out.println("Encerrando a execução no tempo : " + tempo);
   }
-  public float aleatorio(int a, int m, int c, float xi) {
+  public float aleatorio(int a, int m, int c) {
+    float xi = numRandom;
+    if (xi == 0) xi = 0.0001f;
     float aux = (a * xi) + c;
     float f = aux % m;
+    numRandom = f/m;
     return f/m;
   }
 }
